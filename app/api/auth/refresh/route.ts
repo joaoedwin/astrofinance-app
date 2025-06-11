@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
-import { getDatabase } from '@/lib/db.js'
+import { getDatabase } from '@/lib/db'
 import type { User } from '@/types/database'
 import type { AuthUser, AuthResponse, AuthTokenPayload } from '@/types/auth'
 

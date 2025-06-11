@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db.js"
+import { getDatabase } from "@/lib/db"
 import bcrypt from "bcrypt"
 import { verify } from "jsonwebtoken"
 import type { User } from "@/types/database"

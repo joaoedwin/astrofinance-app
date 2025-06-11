@@ -6,7 +6,6 @@ const nextConfig = {
     domains: ['avatars.githubusercontent.com'],
   },
   experimental: {
-    serverActions: true,
     serverComponentsExternalPackages: ['better-sqlite3']
   },
   webpack: (config) => {
