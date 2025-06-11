@@ -4,10 +4,16 @@
 
 Configure as seguintes variáveis de ambiente no painel da Vercel:
 
+1. Acesse o dashboard da Vercel e navegue até o seu projeto
+2. Clique na aba "Settings" e depois em "Environment Variables"
+3. Adicione as seguintes variáveis:
+
 - `JWT_SECRET`: Uma string segura para assinar tokens JWT (ex: astrofinance_production_jwt_secret_key_12345)
 - `JWT_REFRESH_SECRET`: Uma string segura para assinar tokens de refresh (ex: astrofinance_production_refresh_key_67890)
 - `JWT_EXPIRES_IN`: Tempo de expiração do token JWT (ex: 1d)
 - `JWT_REFRESH_EXPIRES_IN`: Tempo de expiração do token de refresh (ex: 7d)
+
+Após adicionar as variáveis, clique em "Save" e então redeploy o projeto.
 
 ## Configuração de Build
 
@@ -15,7 +21,13 @@ O projeto está configurado para usar o arquivo vercel.json que define:
 
 - Configurações de build
 - Regiões de deploy
-- Configurações de funções serverless
+
+## Resolução de Problemas com Build
+
+Se encontrar erros relacionados a renderização estática ou geração de páginas, considere:
+
+1. Verificar se todas as rotas que usam `useSearchParams()` estão envolvidas em `<Suspense>`
+2. Garantir que rotas API que usam request/response estão definidas como servidores dinâmicos
 
 ## Configuração do Banco de Dados
 
