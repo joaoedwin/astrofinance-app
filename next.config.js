@@ -11,7 +11,8 @@ const nextConfig = {
   webpack: (config) => {
     config.externals.push('better-sqlite3');
     return config;
-  }
+  },
+  output: 'standalone'
 }
 
 module.exports = nextConfig 
