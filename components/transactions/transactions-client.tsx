@@ -238,7 +238,7 @@ export function TransactionsClient({ transactions }: TransactionsClientProps) {
       ) : localTransactions.length === 0 ? (
         <div className="py-4 sm:py-6 text-center text-gray-500">
           <p className="text-sm sm:text-base">Nenhuma transação encontrada</p>
-          <p className="text-xs sm:text-sm mt-2">Clique em "Nova Transação" para adicionar uma transação</p>
+          <p className="text-xs sm:text-sm mt-2">Clique em &quot;Nova Transação&quot; para adicionar uma transação</p>
         </div>
       ) : (
         <EditableTransactionTable initialTransactions={getOrderedTransactions} />

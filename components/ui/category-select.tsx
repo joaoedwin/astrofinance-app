@@ -141,7 +141,7 @@ export function CategorySelect({
       
       toast({
         title: "Categoria criada",
-        description: `A categoria "${newCategory.name}" foi criada com sucesso.`,
+        description: `A categoria &quot;${newCategory.name}&quot; foi criada com sucesso.`,
       })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Não foi possível criar a categoria"
@@ -219,7 +219,7 @@ export function CategorySelect({
               className="px-4 py-2 cursor-pointer text-primary flex items-center gap-2 hover:bg-accent text-foreground"
               onClick={handleCreate}
             >
-              <PlusCircle className="h-4 w-4" /> Criar "{inputValue}"
+              <PlusCircle className="h-4 w-4" /> Criar &quot;{inputValue}&quot;
             </li>
           )}
           {loading && (

@@ -35,7 +35,7 @@ export function HelpModal({ open, onClose }: HelpModalProps) {
             <div className="space-y-1 sm:space-y-2">
               <h4 className="font-semibold">✏️ Gerenciamento</h4>
               <ul className="list-disc pl-4 sm:pl-6 space-y-0.5 sm:space-y-1">
-                <li>Adicione novas transações com o botão "Nova Transação"</li>
+                <li>Adicione novas transações com o botão &quot;Nova Transação&quot;</li>
                 <li>Edite qualquer campo clicando diretamente nele</li>
                 <li>Alterne entre receita e despesa clicando no tipo</li>
                 <li>Exclua transações usando o ícone de lixeira</li>

@@ -194,7 +194,7 @@ export function CategorySettings() {
       
       toast({
         title: "Categoria excluída",
-        description: `A categoria "${deletingCategory.name}" foi excluída com sucesso.`,
+        description: `A categoria &quot;${deletingCategory.name}&quot; foi excluída com sucesso.`,
       })
       
       await loadCategories()
@@ -358,7 +358,7 @@ export function CategorySettings() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmação de exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir a categoria "{deletingCategory?.name}"?
+              Tem certeza que deseja excluir a categoria &quot;{deletingCategory?.name}&quot;?
               <div className="mt-2 p-3 bg-muted rounded-md text-sm">
                 <strong>Atenção:</strong> Não será possível excluir categorias que possuem transações ou parcelamentos associados.
               </div>
