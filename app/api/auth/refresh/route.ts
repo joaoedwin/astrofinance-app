@@ -20,8 +20,14 @@ export async function POST(request: Request) {
     // Obter a resposta da API Cloudflare
     const data = await response.json();
     
+    // Transformar a resposta no formato esperado pelo frontend
+    const transformedData = {
+      token: data.token,
+      refreshToken: data.refreshToken
+    };
+    
     // Retornar a resposta com o mesmo status
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(transformedData, { status: response.status });
   } catch (error) {
     console.error('Erro ao encaminhar refresh token para API Cloudflare:', error);
     return NextResponse.json(

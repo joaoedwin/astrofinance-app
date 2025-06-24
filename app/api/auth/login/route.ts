@@ -37,8 +37,17 @@ export async function POST(request: Request) {
     // Obter a resposta da API Cloudflare
     const data = await response.json();
     
+    // Transformar a resposta no formato esperado pelo frontend
+    const transformedData = {
+      user: data.user,
+      tokens: {
+        accessToken: data.token,
+        refreshToken: data.refreshToken
+      }
+    };
+    
     // Retornar a resposta com o mesmo status
-    return NextResponse.json(data, { status: response.status });
+    return NextResponse.json(transformedData, { status: response.status });
   } catch (error) {
     console.error('Erro ao encaminhar login para API Cloudflare:', error);
     return NextResponse.json(
