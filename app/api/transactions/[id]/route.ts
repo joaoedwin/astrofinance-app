@@ -1,20 +1,13 @@
 import { NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db"
-import { verify } from "jsonwebtoken"
-import { getUserById } from "@/lib/auth"
+import { handleApiError } from "../../route-config"
 
 // Forçar renderização dinâmica para evitar problemas de 404
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
-// Verificar se as variáveis de ambiente estão definidas
-if (!process.env.JWT_SECRET) {
-  console.error('AVISO: JWT_SECRET não está definido nas variáveis de ambiente. Usando valor padrão (inseguro para produção).')
-}
-
-// Usar a variável de ambiente JWT_SECRET ou um valor padrão para desenvolvimento
-const JWT_SECRET = process.env.JWT_SECRET || '99c30cac76ce9f79ba2cd54d472434d5a7eb36632c4b07d2329a3d187f3f7c23'
+// URL da API Cloudflare
+const API_URL = "https://astrofinance-api.joaoedumiranda.workers.dev/api";
 
 // GET /api/transactions/[id] - Obter uma transação específica
 export async function GET(
@@ -22,68 +15,47 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar autenticação
-    const token = request.headers.get("Authorization")?.split(" ")[1]
-    if (!token) {
+    // Obter o token de autenticação do cabeçalho
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: "Token não fornecido" },
+        { error: 'Token de autenticação não fornecido' },
         { status: 401 }
-      )
+      );
     }
-
-    // Verificar token JWT
-    let userId: string
-    try {
-      const decoded = verify(token, JWT_SECRET) as { userId: string }
-      userId = decoded.userId
-    } catch (error) {
-      return NextResponse.json(
-        { error: "Token inválido" },
-        { status: 401 }
-      )
-    }
-
-    // Verificar se o usuário existe
-    const user = await getUserById(userId)
-    if (!user) {
-      return NextResponse.json(
-        { error: "Usuário não encontrado" },
-        { status: 404 }
-      )
-    }
-
-    const transactionId = params.id
-    if (!transactionId) {
-      return NextResponse.json(
-        { error: "ID da transação não fornecido" },
-        { status: 400 }
-      )
-    }
-
-    const db = getDatabase()
     
-    // Obter a transação com verificação de propriedade
-    const transaction = db.prepare(`
-      SELECT t.*, c.name as category_name
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      WHERE t.id = ? AND t.user_id = ?
-    `).get(transactionId, userId)
-
-    if (!transaction) {
+    const token = authHeader.substring(7); // Remover 'Bearer ' do início
+    const transactionId = params.id;
+    
+    console.log("[TRANSACTIONS API] Enviando requisição para:", `${API_URL}/transactions/${transactionId}`);
+    
+    // Encaminhar a requisição para a API Cloudflare
+    const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
+    
+    // Verificar se a resposta foi bem-sucedida
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[TRANSACTIONS API] Erro na resposta:", response.status, errorText);
       return NextResponse.json(
-        { error: "Transação não encontrada ou não pertence ao usuário" },
-        { status: 404 }
-      )
+        { error: `Erro ao buscar transação: ${response.status} ${errorText}` },
+        { status: response.status }
+      );
     }
-
-    return NextResponse.json(transaction)
+    
+    // Obter a resposta da API Cloudflare
+    const data = await response.json();
+    console.log("[TRANSACTIONS API] Resposta recebida com sucesso");
+    
+    // Retornar a resposta
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("[API] Erro ao buscar transação:", error)
-    return NextResponse.json(
-      { error: "Erro ao buscar transação" },
-      { status: 500 }
-    )
+    return handleApiError(error, "Erro ao buscar transação");
   }
 }
 
@@ -93,112 +65,53 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar autenticação
-    const token = request.headers.get("Authorization")?.split(" ")[1]
-    if (!token) {
+    // Obter o corpo da requisição
+    const body = await request.json();
+    
+    // Obter o token de autenticação do cabeçalho
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: "Token não fornecido" },
+        { error: 'Token de autenticação não fornecido' },
         { status: 401 }
-      )
+      );
     }
-
-    // Verificar token JWT
-    let userId: string
-    try {
-      const decoded = verify(token, JWT_SECRET) as { userId: string }
-      userId = decoded.userId
-    } catch (error) {
+    
+    const token = authHeader.substring(7); // Remover 'Bearer ' do início
+    const transactionId = params.id;
+    
+    console.log("[TRANSACTIONS API] Enviando requisição para:", `${API_URL}/transactions/${transactionId}`);
+    console.log("[TRANSACTIONS API] Corpo da requisição:", JSON.stringify(body));
+    
+    // Encaminhar a requisição para a API Cloudflare
+    const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+      cache: 'no-store',
+    });
+    
+    // Verificar se a resposta foi bem-sucedida
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[TRANSACTIONS API] Erro na resposta:", response.status, errorText);
       return NextResponse.json(
-        { error: "Token inválido" },
-        { status: 401 }
-      )
+        { error: `Erro ao atualizar transação: ${response.status} ${errorText}` },
+        { status: response.status }
+      );
     }
-
-    // Verificar se o usuário existe
-    const user = await getUserById(userId)
-    if (!user) {
-      return NextResponse.json(
-        { error: "Usuário não encontrado" },
-        { status: 404 }
-      )
-    }
-
-    const transactionId = params.id
-    if (!transactionId) {
-      return NextResponse.json(
-        { error: "ID da transação não fornecido" },
-        { status: 400 }
-      )
-    }
-
-    const body = await request.json()
-    const { amount, date, description, type, categoryId, category_id } = body
-
-    // Validação de campos - Aceitar category_id ou categoryId
-    const categoryIdValue = categoryId || category_id
-    if (!amount || !date || !description || !type || !categoryIdValue) {
-      return NextResponse.json(
-        { error: "Todos os campos são obrigatórios" },
-        { status: 400 }
-      )
-    }
-
-    // Validar tipo
-    if (type !== 'income' && type !== 'expense') {
-      return NextResponse.json(
-        { error: "Tipo deve ser 'income' ou 'expense'" },
-        { status: 400 }
-      )
-    }
-
-    const db = getDatabase()
-
-    // Verificar se a transação existe e pertence ao usuário
-    const existingTransaction = db.prepare(
-      "SELECT * FROM transactions WHERE id = ? AND user_id = ?"
-    ).get(transactionId, userId)
-
-    if (!existingTransaction) {
-      return NextResponse.json(
-        { error: "Transação não encontrada ou não pertence ao usuário" },
-        { status: 404 }
-      )
-    }
-
-    // Verificar se a categoria existe e pertence ao usuário
-    const category = db.prepare(
-      "SELECT * FROM categories WHERE id = ? AND user_id = ?"
-    ).get(categoryIdValue, userId)
-
-    if (!category) {
-      return NextResponse.json(
-        { error: "Categoria não encontrada ou não pertence ao usuário" },
-        { status: 400 }
-      )
-    }
-
-    // Atualizar a transação
-    db.prepare(`
-      UPDATE transactions 
-      SET date = ?, description = ?, amount = ?, type = ?, category_id = ? 
-      WHERE id = ? AND user_id = ?
-    `).run(date, description, amount, type, categoryIdValue, transactionId, userId)
-
-    // Buscar a transação atualizada
-    const updatedTransaction = db.prepare(`
-      SELECT t.*, c.name as category_name
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      WHERE t.id = ?
-    `).get(transactionId)
-
-    return NextResponse.json(updatedTransaction)
+    
+    // Obter a resposta da API Cloudflare
+    const data = await response.json();
+    console.log("[TRANSACTIONS API] Transação atualizada com sucesso");
+    
+    // Retornar a resposta
+    return NextResponse.json(data);
   } catch (error) {
-    console.error("[API] Erro ao atualizar transação:", error)
-    return NextResponse.json(
-      { error: "Erro ao atualizar transação" },
-      { status: 500 }
-    )
+    return handleApiError(error, "Erro ao atualizar transação");
   }
 }
 
@@ -208,72 +121,42 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    // Verificar autenticação
-    const token = request.headers.get("Authorization")?.split(" ")[1]
-    if (!token) {
+    // Obter o token de autenticação do cabeçalho
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { error: "Token não fornecido" },
+        { error: 'Token de autenticação não fornecido' },
         { status: 401 }
-      )
+      );
     }
-
-    // Verificar token JWT
-    let userId: string
-    try {
-      const decoded = verify(token, JWT_SECRET) as { userId: string }
-      userId = decoded.userId
-    } catch (error) {
+    
+    const token = authHeader.substring(7); // Remover 'Bearer ' do início
+    const transactionId = params.id;
+    
+    console.log("[TRANSACTIONS API] Enviando requisição para:", `${API_URL}/transactions/${transactionId}`);
+    
+    // Encaminhar a requisição para a API Cloudflare
+    const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
+    
+    // Verificar se a resposta foi bem-sucedida
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[TRANSACTIONS API] Erro na resposta:", response.status, errorText);
       return NextResponse.json(
-        { error: "Token inválido" },
-        { status: 401 }
-      )
+        { error: `Erro ao excluir transação: ${response.status} ${errorText}` },
+        { status: response.status }
+      );
     }
-
-    // Verificar se o usuário existe
-    const user = await getUserById(userId)
-    if (!user) {
-      return NextResponse.json(
-        { error: "Usuário não encontrado" },
-        { status: 404 }
-      )
-    }
-
-    const transactionId = params.id
-    if (!transactionId) {
-      return NextResponse.json(
-        { error: "ID da transação não fornecido" },
-        { status: 400 }
-      )
-    }
-
-    const db = getDatabase()
-
-    // Verificar se a transação existe e pertence ao usuário
-    const existingTransaction = db.prepare(
-      "SELECT * FROM transactions WHERE id = ? AND user_id = ?"
-    ).get(transactionId, userId)
-
-    if (!existingTransaction) {
-      return NextResponse.json(
-        { error: "Transação não encontrada ou não pertence ao usuário" },
-        { status: 404 }
-      )
-    }
-
-    // Excluir a transação
-    db.prepare(
-      "DELETE FROM transactions WHERE id = ? AND user_id = ?"
-    ).run(transactionId, userId)
-
-    return NextResponse.json(
-      { message: "Transação excluída com sucesso" },
-      { status: 200 }
-    )
+    
+    // Retornar resposta de sucesso
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[API] Erro ao excluir transação:", error)
-    return NextResponse.json(
-      { error: "Erro ao excluir transação" },
-      { status: 500 }
-    )
+    return handleApiError(error, "Erro ao excluir transação");
   }
 } 
