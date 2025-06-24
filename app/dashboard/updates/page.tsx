@@ -105,6 +105,9 @@ export default function UpdatesPage() {
             <h2 className="text-3xl font-bold tracking-tight">Central de Atualizações</h2>
             <p className="text-muted-foreground">
               Esta página centraliza todas as atualizações e anúncios importantes do sistema FinanceTrack.
+
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => router.push('/dashboard')} className="gap-2">

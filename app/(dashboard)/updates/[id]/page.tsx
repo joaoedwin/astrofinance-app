@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
+
 interface Notification {
   id: string
   message: string

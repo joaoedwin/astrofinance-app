@@ -7,6 +7,9 @@ import { CategorySettings } from "@/components/settings/category-settings"
 import { AppSettings } from "@/components/settings/app-settings"
 import { useSearchParams } from "next/navigation"
 
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
+
 function SettingsContent() {
   const searchParams = useSearchParams()
   const tab = searchParams.get("tab") || "profile"

@@ -37,6 +37,9 @@ import {
 import { CreditCardModal } from "@/components/credit-card/credit-card-modal"
 import { ExpenseByCategoryCharts } from "@/components/dashboard/expense-category-charts"
 
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
+
 // Interface para os cartões de crédito
 interface CreditCard {
   id: number

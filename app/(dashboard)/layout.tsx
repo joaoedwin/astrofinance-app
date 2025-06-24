@@ -7,6 +7,9 @@ import Header from "@/components/header"
 import { usePathname } from "next/navigation"
 import { useMobile } from "@/hooks/use-mobile"
 
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
+
 export default function DashboardLayout({
   children,
 }: {

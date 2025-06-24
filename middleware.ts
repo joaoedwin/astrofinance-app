@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Forçar renderização dinâmica para o middleware
+export const dynamic = 'force-dynamic';
+
 // Rotas que não precisam de autenticação
 const publicRoutes = ['/', '/login', '/register'];
 
@@ -68,7 +71,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - public folder
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],
 }; 

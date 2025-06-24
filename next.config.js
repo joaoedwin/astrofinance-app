@@ -7,6 +7,7 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['better-sqlite3'],
+    missingSuspenseWithCSRBailout: false,
   },
   optimizeFonts: false,
   staticPageGenerationTimeout: 300,
@@ -35,6 +36,9 @@ const nextConfig = {
       bodyParser: true,
       externalResolver: true,
     },
+  },
+  compiler: {
+    styledComponents: true,
   },
 }
 

@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge"
 import { useAuthContext } from "@/contexts/auth-context"
 import { toast } from "@/hooks/use-toast"
 
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
+
 interface Notification {
   id: string | null
   message: string

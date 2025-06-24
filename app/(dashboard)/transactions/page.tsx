@@ -28,6 +28,9 @@ interface Transaction {
   category_id: string
 }
 
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
+
 export default async function TransactionsPage() {
   try {
     const token = await getToken()

@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from "@/contexts/auth-context"
 import Script from "next/script"
+import './layout-config';
 
 const inter = Inter({ subsets: ["latin"] })
 

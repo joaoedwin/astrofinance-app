@@ -17,6 +17,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { 
+
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
