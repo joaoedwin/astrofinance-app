@@ -4,6 +4,11 @@ import bcrypt from "bcrypt"
 import { verify } from "jsonwebtoken"
 import type { User } from "@/types/database"
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 export async function POST(request: Request) {
   try {
     const { userId, currentPassword, newPassword } = await request.json()

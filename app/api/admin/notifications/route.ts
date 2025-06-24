@@ -4,6 +4,11 @@ import { verify } from "jsonwebtoken"
 import { getUserById } from "@/lib/auth"
 import type { User } from '@/types/database'
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 // Middleware para verificar se o usuário é admin
 async function isAdmin(request: Request) {
   const auth = request.headers.get("Authorization")

@@ -12,6 +12,11 @@ import type {
 } from '@/types/dashboard'
 import type { TransactionType } from '@/types/database'
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 // Função auxiliar para determinar o valor de uma transação ou instalação
 function getItemAmount(item: TransactionWithCategory | InstallmentWithCategory): number {
   if ('amount' in item && typeof item.amount === 'number') {

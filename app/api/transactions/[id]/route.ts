@@ -3,6 +3,11 @@ import { getDatabase } from "@/lib/db"
 import { verify } from "jsonwebtoken"
 import { getUserById } from "@/lib/auth"
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 // Verificar se as variáveis de ambiente estão definidas
 if (!process.env.JWT_SECRET) {
   console.error('AVISO: JWT_SECRET não está definido nas variáveis de ambiente. Usando valor padrão (inseguro para produção).')

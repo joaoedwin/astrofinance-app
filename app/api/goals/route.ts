@@ -2,6 +2,11 @@ import { NextResponse } from "next/server"
 import { getDatabase, randomUUID } from "@/lib/db"
 import { verify } from "jsonwebtoken"
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 // Helper para autenticação
 function getUserIdFromRequest(request: Request) {
   const auth = request.headers.get("Authorization")

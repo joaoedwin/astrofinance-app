@@ -3,6 +3,11 @@ import { verify } from "jsonwebtoken"
 import { getUserById } from "@/lib/auth"
 import { getDatabase } from "@/lib/db"
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 interface DBInstallment {
   id: string
   description: string

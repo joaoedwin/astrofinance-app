@@ -3,6 +3,11 @@ import { getDatabase, randomUUID } from "@/lib/db"
 import { verify } from "jsonwebtoken"
 import { getUserById } from "@/lib/auth"
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+
 export async function GET(request: Request) {
   try {
     // Verificar autenticação
