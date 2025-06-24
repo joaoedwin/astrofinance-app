@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+
 // URL da API Cloudflare
 const API_URL = "https://astrofinance-api.joaoedumiranda.workers.dev/api";
 

@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server'
+import { handleApiError } from '../../route-config'
+
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+export const revalidate = 0
 
 // URL da API Cloudflare
-const API_URL = "https://astrofinance-api.joaoedumiranda.workers.dev/api";
+const API_URL = "https://astrofinance-api.joaoedumiranda.workers.dev/api"
 
 // Função para obter o IP real, considerando proxies
 function getIpAddress(request: Request): string {
@@ -23,9 +29,9 @@ function getIpAddress(request: Request): string {
 export async function POST(request: Request) {
   try {
     // Obter o corpo da requisição
-    const body = await request.json();
-    console.log("[LOGIN API] Enviando requisição para:", `${API_URL}/auth/login`);
-    console.log("[LOGIN API] Corpo da requisição:", JSON.stringify(body));
+    const body = await request.json()
+    console.log("[LOGIN API] Enviando requisição para:", `${API_URL}/auth/login`)
+    console.log("[LOGIN API] Corpo da requisição:", JSON.stringify(body))
     
     // Encaminhar a requisição para a API Cloudflare
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -34,21 +40,23 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    });
+      // Garantir que não use cache
+      cache: 'no-store',
+    })
     
     // Verificar se a resposta foi bem-sucedida
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[LOGIN API] Erro na resposta:", response.status, errorText);
+      const errorText = await response.text()
+      console.error("[LOGIN API] Erro na resposta:", response.status, errorText)
       return NextResponse.json(
         { error: `Falha na autenticação: ${response.status} ${errorText}` },
         { status: response.status }
-      );
+      )
     }
     
     // Obter a resposta da API Cloudflare
-    const data = await response.json();
-    console.log("[LOGIN API] Resposta recebida:", JSON.stringify(data));
+    const data = await response.json()
+    console.log("[LOGIN API] Resposta recebida:", JSON.stringify(data))
     
     // Transformar a resposta no formato esperado pelo frontend
     const transformedData = {
@@ -57,17 +65,13 @@ export async function POST(request: Request) {
         accessToken: data.token,
         refreshToken: data.refreshToken
       }
-    };
+    }
     
-    console.log("[LOGIN API] Dados transformados:", JSON.stringify(transformedData));
+    console.log("[LOGIN API] Dados transformados:", JSON.stringify(transformedData))
     
     // Retornar a resposta transformada
-    return NextResponse.json(transformedData);
+    return NextResponse.json(transformedData)
   } catch (error) {
-    console.error("[LOGIN API] Erro ao processar login:", error);
-    return NextResponse.json(
-      { error: `Erro ao processar login: ${error instanceof Error ? error.message : String(error)}` },
-      { status: 500 }
-    );
+    return handleApiError(error, "Erro ao processar login")
   }
 } 

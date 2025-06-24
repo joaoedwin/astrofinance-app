@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Forçar renderização dinâmica para evitar problemas de 404
+export const dynamic = 'force-dynamic';
+
 // URL da API Cloudflare
 const API_URL = "https://astrofinance-api.joaoedumiranda.workers.dev/api";
 
@@ -29,7 +32,7 @@ export async function POST(request: Request) {
     // Retornar a resposta com o mesmo status
     return NextResponse.json(transformedData, { status: response.status });
   } catch (error) {
-    console.error('Erro ao encaminhar refresh token para API Cloudflare:', error);
+    console.error('Erro ao encaminhar refresh para API Cloudflare:', error);
     return NextResponse.json(
       { error: 'Erro ao processar refresh token' },
       { status: 500 }
