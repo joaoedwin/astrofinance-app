@@ -17,9 +17,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { 
-
-// Forçar renderização dinâmica para evitar problemas com cookies
-export const dynamic = 'force-dynamic';
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -29,6 +26,9 @@ export const dynamic = 'force-dynamic';
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+
+// Forçar renderização dinâmica para evitar problemas com cookies
+export const dynamic = 'force-dynamic';
 
 interface AdminUser {
   id: string
