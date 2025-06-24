@@ -7,9 +7,9 @@ const nextConfig = {
   },
   experimental: {
     serverComponentsExternalPackages: ['better-sqlite3'],
-    appDir: true,
   },
   optimizeFonts: false,
+  staticPageGenerationTimeout: 300,
   webpack: (config) => {
     config.externals.push('better-sqlite3');
     return config;
