@@ -12,7 +12,15 @@ const nextConfig = {
     config.externals.push('better-sqlite3');
     return config;
   },
-  output: 'standalone'
+  output: 'standalone',
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://astrofinance-api.joaoedumiranda.workers.dev/api/:path*',
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig 

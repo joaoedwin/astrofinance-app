@@ -1,41 +1,46 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { verify } from "jsonwebtoken"
 
 // Rotas que não precisam de autenticação
-const publicRoutes = ["/login", "/register"]
+const publicRoutes = ["/login", "/register", "/", "/api/auth"]
+
+// Rotas que são redirecionadas para a página de login se não houver autenticação
+const protectedRoutes = [
+  "/dashboard", 
+  "/transactions", 
+  "/categories", 
+  "/goals", 
+  "/reports", 
+  "/settings",
+  "/credit-cards",
+  "/installments"
+]
 
 export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  
   // Verificar se a rota é pública
-  if (publicRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next()
   }
 
-  // Verificar tokens nos cookies e localStorage
-  const token = request.cookies.get("token")?.value || 
-                request.cookies.get("jwt")?.value
-
-  // Se não houver token nos cookies, verificar o Authorization header
-  // que pode vir de localStorage via fetch
-  if (!token) {
-    const authHeader = request.headers.get("authorization")
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const headerToken = authHeader.substring(7)
-      
-      // Armazenar o token como cookie para futuras requisições
-      const response = NextResponse.next()
-      response.cookies.set("token", headerToken, {
-        httpOnly: true,
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 dias
-        path: "/"
-      })
-      
-      return response
-    }
+  // Verificar se a rota é protegida
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  if (!isProtectedRoute) {
+    return NextResponse.next()
   }
 
-  // Continuar para a página - a autenticação será verificada no lado do cliente ou do servidor
+  // Verificar token nos cookies
+  const token = request.cookies.get("token")?.value
+  
+  // Se não houver token, redirecionar para a página de login
+  if (!token) {
+    const url = new URL("/login", request.url)
+    url.searchParams.set("redirect", encodeURI(pathname))
+    return NextResponse.redirect(url)
+  }
+
+  // Continuar para a página - a autenticação será verificada no lado do cliente
   return NextResponse.next()
 }
 
@@ -43,11 +48,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 } 
