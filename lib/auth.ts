@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 import { getDatabase, randomUUID } from './db'
+import jwt from 'jsonwebtoken'
 
 // Aumentar o fator de custo do bcrypt para 12 (era 10)
 // Um fator mais alto significa mais segurança, mas também mais tempo de processamento
@@ -88,5 +89,32 @@ export async function getUserById(id: string): Promise<User | null> {
   } catch (error) {
     console.error('Erro ao buscar usuário:', error)
     throw error
+  }
+}
+
+// Função para verificar token JWT
+export async function verifyAuth(token: string): Promise<boolean> {
+  try {
+    // Verificar se o token é válido
+    const secret = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
+    
+    // Verificar o token
+    jwt.verify(token, secret);
+    return true;
+  } catch (error) {
+    console.error('Erro ao verificar token:', error);
+    return false;
+  }
+}
+
+// Função para obter o usuário a partir do token
+export function getUserFromToken(token: string) {
+  try {
+    const secret = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
+    const decoded = jwt.verify(token, secret);
+    return decoded;
+  } catch (error) {
+    console.error('Erro ao decodificar token:', error);
+    return null;
   }
 } 

@@ -24,6 +24,8 @@ export async function POST(request: Request) {
   try {
     // Obter o corpo da requisição
     const body = await request.json();
+    console.log("[LOGIN API] Enviando requisição para:", `${API_URL}/auth/login`);
+    console.log("[LOGIN API] Corpo da requisição:", JSON.stringify(body));
     
     // Encaminhar a requisição para a API Cloudflare
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -34,8 +36,19 @@ export async function POST(request: Request) {
       body: JSON.stringify(body),
     });
     
+    // Verificar se a resposta foi bem-sucedida
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[LOGIN API] Erro na resposta:", response.status, errorText);
+      return NextResponse.json(
+        { error: `Falha na autenticação: ${response.status} ${errorText}` },
+        { status: response.status }
+      );
+    }
+    
     // Obter a resposta da API Cloudflare
     const data = await response.json();
+    console.log("[LOGIN API] Resposta recebida:", JSON.stringify(data));
     
     // Transformar a resposta no formato esperado pelo frontend
     const transformedData = {
@@ -46,12 +59,14 @@ export async function POST(request: Request) {
       }
     };
     
-    // Retornar a resposta com o mesmo status
-    return NextResponse.json(transformedData, { status: response.status });
+    console.log("[LOGIN API] Dados transformados:", JSON.stringify(transformedData));
+    
+    // Retornar a resposta transformada
+    return NextResponse.json(transformedData);
   } catch (error) {
-    console.error('Erro ao encaminhar login para API Cloudflare:', error);
+    console.error("[LOGIN API] Erro ao processar login:", error);
     return NextResponse.json(
-      { error: 'Erro ao processar login' },
+      { error: `Erro ao processar login: ${error instanceof Error ? error.message : String(error)}` },
       { status: 500 }
     );
   }

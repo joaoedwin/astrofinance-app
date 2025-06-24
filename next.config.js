@@ -6,8 +6,10 @@ const nextConfig = {
     domains: ['avatars.githubusercontent.com'],
   },
   experimental: {
-    serverComponentsExternalPackages: ['better-sqlite3']
+    serverComponentsExternalPackages: ['better-sqlite3'],
+    appDir: true,
   },
+  optimizeFonts: false,
   webpack: (config) => {
     config.externals.push('better-sqlite3');
     return config;
@@ -17,7 +19,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://astrofinance-api.joaoedumiranda.workers.dev/api/:path*',
+        destination: process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/:path*` : '/api/:path*',
       },
     ];
   },

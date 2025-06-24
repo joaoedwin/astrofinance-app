@@ -49,20 +49,38 @@ export const apiFetch = async <T = any>(
     headers.set('Authorization', `Bearer ${token}`);
   }
   
-  // Fazer a requisição
-  const response = await fetch(url, {
-    ...fetchOptions,
-    headers,
-  });
+  console.log(`[API Client] Fazendo requisição para: ${url}`);
+  console.log(`[API Client] Método: ${fetchOptions.method || 'GET'}`);
+  console.log(`[API Client] Token presente: ${token ? 'Sim' : 'Não'}`);
   
-  // Verificar se a resposta é bem-sucedida
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Erro na requisição: ${response.status}`);
+  try {
+    // Fazer a requisição
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      credentials: 'include', // Incluir cookies na requisição
+    });
+    
+    // Verificar se a resposta é bem-sucedida
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[API Client] Erro na resposta: ${response.status}`, errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.error || `Erro na requisição: ${response.status}`);
+      } catch (e) {
+        throw new Error(`Erro na requisição: ${response.status} - ${errorText}`);
+      }
+    }
+    
+    // Retornar dados da resposta
+    const data = await response.json();
+    console.log(`[API Client] Resposta recebida:`, data);
+    return data;
+  } catch (error) {
+    console.error(`[API Client] Erro ao fazer requisição:`, error);
+    throw error;
   }
-  
-  // Retornar dados da resposta
-  return response.json();
 };
 
 // Métodos de conveniência para diferentes tipos de requisições

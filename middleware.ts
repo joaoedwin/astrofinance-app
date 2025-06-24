@@ -1,49 +1,77 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from 'next/server';
+import { verifyAuth } from './lib/auth';
 
 // Rotas que não precisam de autenticação
-const publicRoutes = ["/login", "/register", "/", "/api/auth"]
+const publicRoutes = ['/', '/login', '/register'];
 
-// Rotas que são redirecionadas para a página de login se não houver autenticação
-const protectedRoutes = [
-  "/dashboard", 
-  "/transactions", 
-  "/categories", 
-  "/goals", 
-  "/reports", 
-  "/settings",
-  "/credit-cards",
-  "/installments"
-]
+// Rotas de API que não precisam de autenticação
+const publicApiRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh'];
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   
-  // Verificar se a rota é pública
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.next()
+  // Log para depuração
+  console.log(`[Middleware] Processando requisição para: ${pathname}`);
+
+  // Permitir requisições OPTIONS para CORS
+  if (request.method === 'OPTIONS') {
+    console.log('[Middleware] Requisição OPTIONS detectada, permitindo CORS');
+    return handleCors(request);
   }
 
-  // Verificar se a rota é protegida
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-  if (!isProtectedRoute) {
-    return NextResponse.next()
+  // Verificar se é uma rota pública
+  if (publicRoutes.some(route => pathname === route) || 
+      publicApiRoutes.some(route => pathname.startsWith(route))) {
+    console.log('[Middleware] Rota pública, permitindo acesso');
+    return handleCors(request);
   }
 
-  // Verificar token nos cookies
-  const token = request.cookies.get("token")?.value
-  
-  // Se não houver token, redirecionar para a página de login
-  if (!token) {
-    const url = new URL("/login", request.url)
-    url.searchParams.set("redirect", encodeURI(pathname))
-    return NextResponse.redirect(url)
-  }
+  // Verificar token de autenticação
+  try {
+    const token = request.cookies.get('token')?.value;
+    console.log(`[Middleware] Token encontrado: ${token ? 'sim' : 'não'}`);
+    
+    if (!token) {
+      console.log('[Middleware] Token não encontrado, redirecionando para login');
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
 
-  // Continuar para a página - a autenticação será verificada no lado do cliente
-  return NextResponse.next()
+    // Verificar token
+    const verifiedToken = await verifyAuth(token);
+    console.log(`[Middleware] Token verificado: ${verifiedToken ? 'válido' : 'inválido'}`);
+    
+    if (!verifiedToken) {
+      console.log('[Middleware] Token inválido, redirecionando para login');
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      response.cookies.delete('token');
+      return response;
+    }
+
+    // Token válido, permitir acesso
+    console.log('[Middleware] Token válido, permitindo acesso');
+    return handleCors(request);
+  } catch (error) {
+    console.error('[Middleware] Erro ao verificar token:', error);
+    const response = NextResponse.redirect(new URL('/login', request.url));
+    response.cookies.delete('token');
+    return response;
+  }
 }
 
+// Função para adicionar headers CORS
+function handleCors(request: NextRequest) {
+  const response = NextResponse.next();
+  
+  // Adicionar headers CORS
+  response.headers.set('Access-Control-Allow-Credentials', 'true');
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  response.headers.set('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+  
+  return response;
+}
+
+// Configurar para quais rotas o middleware deve ser executado
 export const config = {
   matcher: [
     /*
@@ -52,6 +80,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
-} 
+}; 
