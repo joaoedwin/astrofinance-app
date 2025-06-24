@@ -4,8 +4,8 @@
  * Este arquivo contém a configuração da API AstroFinance
  */
 
-// URL base da API
-export const API_BASE_URL = "https://astrofinance-api.joaoedumiranda.workers.dev/api";
+// URL base da API - usando o proxy configurado no Next.js
+export const API_BASE_URL = "/api";
 
 // Endpoints da API
 export const API_ENDPOINTS = {
