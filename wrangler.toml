@@ -1,0 +1,119 @@
+name = "astrofinance-api"
+compatibility_date = "2024-07-08" # Data de hoje
+
+# Binding para o banco de dados D1
+[[d1_databases]]
+binding = "DB" # Nome que usaremos no código para acessar o banco (env.DB)
+database_name = "astrofinance-db" # Nome do seu banco de dados no painel Cloudflare
+database_id = "<COLOQUE_SEU_D1_DATABASE_ID_AQUI>" # IMPORTANTE: Substitua pelo ID real
+
+# Configuração de Build para o Worker
+[build]
+command = "pnpm run build:worker" # Script que definiremos no package.json
+# O Wrangler tentará encontrar o entry point automaticamente se ele estiver em um local padrão como dist/index.js ou src/index.js
+# Se nosso output for dist/worker.js, podemos precisar especificar:
+# main = "./dist/worker.js"
+# Ou, para o formato de módulos (ESM) que é o padrão para Hono e builds modernos:
+# [dev]
+# entry = "server/worker.ts" # Para wrangler dev
+# main = "./dist/worker.js" # Para wrangler deploy, após o build
+
+[vars]
+# JWT_SECRET será pego das variáveis de ambiente do Worker no painel Cloudflare,
+# mas pode ser definido aqui para desenvolvimento local se wrangler dev não pegar automaticamente.
+# No entanto, é melhor configurar no painel e usar `wrangler secret put JWT_SECRET` para dev local se necessário.
+
+# Para o formato ESM do worker (recomendado com Hono)
+[esm]
+main = "./dist/worker.js" # Aponta para o output do nosso build:worker
+format = "service-worker" # Define o formato do bundle (service-worker ou modules)
+# Para Hono, geralmente é 'modules', mas 'service-worker' com um bundler como esbuild funciona bem.
+# Vamos manter 'service-worker' por enquanto e ajustar se necessário.
+# Se estivermos usando o formato `modules` nativamente, a configuração é um pouco diferente.
+# Por enquanto, esbuild criará um bundle que funciona como "service-worker".
+
+# Adicionando configuração para wrangler dev usar o arquivo TS diretamente
+[dev]
+ip = "0.0.0.0"
+port = 8787 # Porta padrão para wrangler dev
+local_protocol = "http"
+# entry = "server/worker.ts" # Se quisermos que o wrangler dev use o arquivo TS diretamente com esbuild on-the-fly
+# No entanto, é mais consistente testar o que será realmente buildado:
+# command = "pnpm run build:worker && mv dist/worker.js dist/worker-dev.js && wrangler dev dist/worker-dev.js --local ..."
+# Por simplicidade, vamos deixar o wrangler dev usar o output do build:worker por enquanto.
+# Se `pnpm run dev:worker` for configurado para usar `wrangler dev server/worker.ts`,
+# ele usará o esbuild interno do Wrangler.
+# A configuração '[build]' acima é para o deploy de produção.
+# Para 'wrangler deploy', ele vai rodar 'pnpm run build:worker' e pegar o 'main' de [esm] ou global.
+
+# Para garantir que o wrangler deploy pegue o arquivo certo
+# main = "./dist/worker.js" # Repetido aqui para clareza, mas [esm].main deve ser suficiente.
+
+# Remover a seção [esm] redundante e simplificar.
+# O Wrangler v3 infere muitas coisas.
+# A configuração `main` no nível superior é geralmente para o formato service-worker.
+# Para módulos ES, é `[build.upload] format = "modules"` e `main` aponta para o diretório do módulo.
+# Vamos simplificar e focar no essencial. wrangler.toml pode ser bem minimalista.
+
+# --- REVISÃO DO WRANGLER.TOML ---
+# name = "astrofinance-api"
+# compatibility_date = "2024-07-08"
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "astrofinance-db"
+# database_id = "<COLOQUE_SEU_D1_DATABASE_ID_AQUI>"
+
+# main = "dist/worker.js" # Caminho para o arquivo principal do worker após o build
+
+# [build]
+# command = "pnpm run build:worker"
+# # Se o seu worker estiver em um subdiretório, por exemplo, 'worker/'
+# # watch_dir = "worker/src"
+# upload_format = "service-worker" # ou "modules"
+# upload_dir = "dist" # Diretório onde o 'main' (worker.js) está localizado
+
+# -- Tentativa de wrangler.toml mais moderno e simples para esbuild output --
+# name = "astrofinance-api"
+# compatibility_date = "2024-07-08"
+# main = "dist/worker.js" # Entry point do seu worker empacotado
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "astrofinance-db"
+# database_id = "<COLOQUE_SEU_D1_DATABASE_ID_AQUI>"
+
+# [build]
+# command = "pnpm run build:worker" # Comando para construir seu worker
+# # upload.format = "service-worker" # O wrangler geralmente detecta isso a partir do arquivo.
+# # Esbuild produz um formato que funciona bem como service-worker.
+
+# --- VERSÃO FINAL SIMPLIFICADA PARA INÍCIO ---
+name = "astrofinance-api"
+compatibility_date = "2024-07-08" # Use a data atual
+
+# O entry point do seu Worker. Este arquivo será o resultado do seu comando de build.
+main = "dist/worker.js"
+
+[[d1_databases]]
+binding = "DB" # Como você vai referenciar o D1 no seu código: `env.DB`
+database_name = "astrofinance-db" # O nome do seu banco de dados D1
+database_id = "062ee783-b8fd-40a6-b3a9-23a67f5f1497" # Substitua pelo ID real do seu banco D1
+
+[build]
+command = "pnpm run build:worker" # O comando que o Wrangler executará para construir seu Worker
+# watch_dir = "server" # Opcional: diretório para observar mudanças durante o `wrangler dev` se não usar `entry` em [dev]
+# upload.format = "service-worker" # Default para .js é service-worker. Se esbuild gera ESM puro, pode ser "modules".
+                                 # O output do esbuild como configuraremos funcionará bem com o default.
+
+# [env.production] # Configurações específicas de ambiente (opcional)
+# d1_databases = [
+#   { binding = "DB", database_name = "astrofinance-db-prod", database_id = "<ID_PROD>" }
+# ]
+
+# [dev] # Configurações para `wrangler dev`
+# entry = "server/worker.ts" # Se quiser que wrangler dev use o esbuild interno para transpilar na hora
+# Se não especificado, `wrangler dev` tentará usar o `main` global, que é `dist/worker.js`.
+# Para `wrangler dev` com D1, você precisará do binding configurado.
+# `wrangler dev --local-d1` ou configurar `d1_preview_database_id` se quiser usar um D1 remoto para dev.
+# Para nosso script `dev:worker` com `--d1 DB`, ele criará um .mf/d1/DB.sqlite3 local.
