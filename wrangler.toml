@@ -1,0 +1,13 @@
+name = "astrofinance-api"
+compatibility_date = "2024-07-08" # Use a data atual
+
+# O entry point do seu Worker. Este arquivo será o resultado do seu comando de build.
+main = "dist/worker.js"
+
+[[d1_databases]]
+binding = "DB" # Como você vai referenciar o D1 no seu código: `env.DB`
+database_name = "astrofinance-db" # O nome do seu banco de dados D1
+database_id = "062ee783-b8fd-40a6-b3a9-23a67f5f1497" # ID real do banco D1
+
+[build]
+command = "pnpm run build:worker" # O comando que o Wrangler executará para construir seu Worker

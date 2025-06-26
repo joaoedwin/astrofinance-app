@@ -1,58 +1,53 @@
-import { NextResponse } from "next/server"
-import { getDatabase } from "@/lib/db"
-import bcrypt from "bcrypt"
-import { verify } from "jsonwebtoken"
-import type { User } from "@/types/database"
+import { NextResponse } from "next/server";
 
-// Forçar renderização dinâmica para evitar problemas de 404
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
+const WORKER_API_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '');
+
 export async function POST(request: Request) {
-  try {
-    const { userId, currentPassword, newPassword } = await request.json()
-    if (!userId || !currentPassword || !newPassword) {
-      return NextResponse.json(
-        { error: "Todos os campos são obrigatórios" },
-        { status: 400 }
-      )
-    }
-
-    const db = getDatabase()
-    const user = await db.get<User>("SELECT * FROM users WHERE id = ?", [userId])
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Usuário não encontrado" },
-        { status: 404 }
-      )
-    }
-
-    if (!user.password_hash) {
-      return NextResponse.json(
-        { error: "Senha não definida para este usuário" },
-        { status: 400 }
-      )
-    }
-
-    const valid = await bcrypt.compare(currentPassword, user.password_hash)
-    if (!valid) {
-      return NextResponse.json(
-        { error: "Senha atual incorreta" },
-        { status: 401 }
-      )
-    }
-
-    const hash = await bcrypt.hash(newPassword, 10)
-    await db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hash, user.id])
-
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error("Erro ao alterar senha:", error)
+  if (!WORKER_API_URL) {
+    console.error("NEXT_PUBLIC_API_URL não está configurado.");
     return NextResponse.json(
-      { error: "Erro ao alterar senha" },
+      { error: "Configuração do servidor incompleta." },
       { status: 500 }
-    )
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const authorizationHeader = request.headers.get('Authorization');
+    if (!authorizationHeader) {
+      return NextResponse.json({ error: "Token de autorização ausente." }, { status: 401 });
+    }
+
+    const { currentPassword, newPassword } = body;
+    if (!currentPassword || !newPassword) {
+      return NextResponse.json(
+        { error: "Senha atual e nova senha são obrigatórias" },
+        { status: 400 }
+      );
+    }
+
+    const workerResponse = await fetch(`${WORKER_API_URL}/api/auth/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': authorizationHeader,
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    const responseData = await workerResponse.json();
+
+    return NextResponse.json(responseData, { status: workerResponse.status });
+
+  } catch (error) {
+    console.error("Erro ao encaminhar para /api/auth/change-password do Worker:", error);
+    return NextResponse.json(
+      { error: "Erro interno ao processar a alteração de senha." },
+      { status: 500 }
+    );
   }
 } 
