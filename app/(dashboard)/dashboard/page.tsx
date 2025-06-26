@@ -134,7 +134,7 @@ export default function DashboardPage() {
 
     // const today = new Date(); // Lógica antiga mantida comentada abaixo para referência
     // const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
+    // const currentMonth = today.getMonth(); // Removido pois 'today' está comentado
     
     switch (chartPeriod) {
       case 'Semanal': {

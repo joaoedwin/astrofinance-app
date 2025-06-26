@@ -52,16 +52,13 @@ export function useInstallments() {
     createInstallment,
     updateInstallment,
     deleteInstallment,
-    payInstallment,
-  }
-}
-
 // Tipos para dados de criação e atualização, para melhor clareza
 type CreateInstallmentPayload = Omit<Installment, 'id' | 'userId' | 'created_at' | 'paidInstallments' | 'type' | 'category' | 'nextPaymentDate'> & { creditCardId?: number | null };
 type UpdateInstallmentPayload = Partial<Omit<CreateInstallmentPayload, 'userId'>>;
 
-
-function useInstallments() {
+// A definição anterior de useInstallments que era mais simples foi removida.
+// Esta é a definição completa.
+export function useInstallments() { // Adicionado export aqui, se a anterior era a exportada.
   const { token } = useAuthContext()
   const [installments, setInstallments] = useState<Installment[]>([])
   const [loading, setLoading] = useState(false)
