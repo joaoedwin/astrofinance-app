@@ -67,6 +67,39 @@ export interface Goal {
   completed_at?: string;
 }
 
+export interface GoalReserve {
+  id: string;
+  goal_id: string;
+  user_id: string;
+  month: string; // YYYY-MM
+  amount: number;
+  created_at?: string;
+}
+
+export interface CreditCard {
+  id: number;
+  userId: string;
+  name: string;
+  color: string;
+  lastFourDigits?: string | null;
+  bank?: string | null;
+  cardLimit?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string; // Pode ser string | null se houver notificações de sistema não atreladas a usuário
+  type?: string | null;
+  message?: string | null;
+  created_at?: string; // Gerado pelo DB
+  read: 0 | 1; // 0 para não lida, 1 para lida
+  description?: string | null;
+  created_by?: string | null; // 'system' ou um user_id
+  goal_id?: string | null;
+}
+
 export interface Database extends BetterSQLite3Database {
   all<T = any>(sql: string, params?: any[]): Promise<T[]>;
   get<T = any>(sql: string, params?: any[]): Promise<T>;

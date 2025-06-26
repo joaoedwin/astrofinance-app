@@ -11,3 +11,10 @@ database_id = "062ee783-b8fd-40a6-b3a9-23a67f5f1497" # ID real do banco D1
 
 [build]
 command = "pnpm run build:worker" # O comando que o Wrangler executará para construir seu Worker
+
+[triggers]
+# Exemplo: Rodar todo dia à meia-noite UTC. Ajuste o cron string conforme necessário.
+# Formato: <Minuto> <Hora> <Dia do Mês> <Mês> <Dia da Semana>
+# Mais info: https://developers.cloudflare.com/workers/platform/triggers/cron-triggers/#cron-expressions
+crons = ["0 0 * * *"] # Todo dia à 00:00 UTC
+# Para rodar no primeiro dia de cada mês à 00:00 UTC: "0 0 1 * *"

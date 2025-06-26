@@ -21,25 +21,34 @@ export function useGoalReserves() {
     setLoading(true);
     setError(null);
     try {
-      let url = "/api/goals/reserves";
-      const params = [];
-      if (goalId) params.push(`goal_id=${goalId}`);
-      if (month) params.push(`month=${month}`);
-      if (params.length > 0) url += `?${params.join("&")}`;
+      let url = "/api/goal-reserves"; // Corrigido
+      const queryParams = new URLSearchParams();
+      if (goalId) queryParams.append('goal_id', goalId);
+      // O filtro por 'month' não está implementado na API do worker GET /api/goal-reserves
+      // Se for necessário, precisará ser adicionado lá ou o frontend filtra os resultados.
+      // if (month) queryParams.append('month', month);
+      const queryString = queryParams.toString();
+      if (queryString) url += `?${queryString}`;
+
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Erro ao buscar reservas");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Erro ao buscar reservas" }));
+        throw new Error(errorData.message || "Erro ao buscar reservas");
+      }
       const data = await res.json();
-      setReserves((prev) => {
-        if (goalId) {
-          // Remove reservas do goalId e adiciona as novas
-          const filtered = prev.filter(r => r.goal_id !== goalId);
-          return [...filtered, ...data];
-        }
-        // Se não filtrando, sobrescreve tudo
-        return data;
-      });
+      // Atualização de estado mais robusta:
+      // Se goalId for fornecido, atualiza/adiciona apenas as reservas para essa meta.
+      // Se não, substitui todas as reservas.
+      if (goalId) {
+        setReserves(prev => {
+          const otherReserves = prev.filter(r => r.goal_id !== goalId);
+          return [...otherReserves, ...data];
+        });
+      } else {
+        setReserves(data);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -52,7 +61,7 @@ export function useGoalReserves() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/goals/reserves", {
+      const res = await fetch("/api/goal-reserves", { // Corrigido
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -60,13 +69,18 @@ export function useGoalReserves() {
         },
         body: JSON.stringify(reserve),
       });
-      if (!res.ok) throw new Error("Erro ao criar reserva");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Erro ao criar reserva" }));
+        throw new Error(errorData.message || "Erro ao criar reserva");
+      }
       const data = await res.json();
-      setReserves((prev) => [data, ...prev]);
+      // Adicionar à lista local ou refazer o fetch para consistência, dependendo da preferência.
+      // Adicionar localmente pode ser mais rápido, mas refazer fetch garante dados mais recentes se houver concorrência.
+      setReserves((prev) => [...prev, data].sort((a,b) => b.month.localeCompare(a.month) || new Date(b.created_at).getTime() - new Date(a.created_at).getTime())); // Re-sort
       return data;
     } catch (err: any) {
       setError(err.message);
-      return null;
+      throw err; // Relançar para o componente poder tratar (ex: toast)
     } finally {
       setLoading(false);
     }
@@ -77,21 +91,24 @@ export function useGoalReserves() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/goals/reserves", {
+      const res = await fetch(`/api/goal-reserves/${id}`, { // Corrigido
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ id, amount }),
+        body: JSON.stringify({ amount }), // Apenas 'amount' no corpo
       });
-      if (!res.ok) throw new Error("Erro ao atualizar reserva");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Erro ao atualizar reserva" }));
+        throw new Error(errorData.message || "Erro ao atualizar reserva");
+      }
       const data = await res.json();
       setReserves((prev) => prev.map((r) => (r.id === id ? data : r)));
       return data;
     } catch (err: any) {
       setError(err.message);
-      return null;
+      throw err; // Relançar para o componente poder tratar
     } finally {
       setLoading(false);
     }
@@ -102,16 +119,19 @@ export function useGoalReserves() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/goals/reserves?id=${id}`, {
+      const res = await fetch(`/api/goal-reserves/${id}`, { // Corrigido
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Erro ao deletar reserva");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: "Erro ao deletar reserva" }));
+        throw new Error(errorData.message || "Erro ao deletar reserva");
+      }
       setReserves((prev) => prev.filter((r) => r.id !== id));
       return true;
     } catch (err: any) {
       setError(err.message);
-      return false;
+      throw err; // Relançar para o componente poder tratar
     } finally {
       setLoading(false);
     }

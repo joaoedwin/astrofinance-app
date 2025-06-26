@@ -72,7 +72,7 @@ export function useGoals() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch("/api/goals", {
+      const res = await fetch(`/api/goals/${goal.id}`, { // Corrigido: ID na URL
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -97,7 +97,7 @@ export function useGoals() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/goals?id=${id}`, {
+      const res = await fetch(`/api/goals/${id}`, { // Corrigido: ID na URL
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       })

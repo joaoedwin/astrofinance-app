@@ -126,14 +126,13 @@ export function CreditCardManager({ buttonProps, isDialog = false }: CreditCardM
       
       if (isEditing && currentCard) {
         // Update existing card
-        response = await fetch("/api/credit-cards", {
+        response = await fetch(`/api/credit-cards/${currentCard.id}`, { // Corrigido: ID na URL
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify({
-            id: currentCard.id,
+          body: JSON.stringify({ // ID não precisa ir no corpo para PUT na URL /:id
             name: formData.name.trim(),
             color: formData.color,
             lastFourDigits: formData.lastFourDigits.trim() || null
@@ -214,7 +213,7 @@ export function CreditCardManager({ buttonProps, isDialog = false }: CreditCardM
     setDeleteError("")
     
     try {
-      const response = await fetch(`/api/credit-cards?id=${cardToDelete.id}`, {
+      const response = await fetch(`/api/credit-cards/${cardToDelete.id}`, { // Corrigido: ID na URL
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`

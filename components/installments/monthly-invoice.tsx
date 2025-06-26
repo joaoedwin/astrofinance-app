@@ -237,7 +237,7 @@ export function MonthlyInvoice() {
         return
       }
 
-      let response = await fetch(`/api/invoice?month=${currentMonth}&year=${currentYear}`, {
+      let response = await fetch(`/api/invoice-summary?month=${currentMonth}&year=${currentYear}`, { // Rota atualizada
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -245,91 +245,61 @@ export function MonthlyInvoice() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          token = await handleApiError(new Error("jwt expired"))
-          if (!token) return
+          token = await handleApiError(new Error("jwt expired")) // Assumindo que handleApiError retorna o novo token ou null
+          if (!token) return // Se o refresh falhar, interrompe
           
-          response = await fetch(`/api/invoice?month=${currentMonth}&year=${currentYear}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
+          // Tentar novamente com o novo token
+          response = await fetch(`/api/invoice-summary?month=${currentMonth}&year=${currentYear}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (!response.ok) { // Se ainda falhar, lançar erro
+             const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
+             throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
           }
-        })
         } else {
-          throw new Error(`HTTP error! status: ${response.status}`)
+           const errorData = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
+           throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
         }
       }
 
-        const data = await response.json()
+      const data = await response.json(); // Espera InvoiceSummaryResponse
       
-      // Verificar se temos dados
-      let itemsToUse = data.invoiceItems || [];
-      let transactionsToUse = data.transactions || [];
-      const dataInfo = data.dataInfo || { 
-        hasRealData: false, 
-        totalDataCount: { installmentsCount: 0, transactionsCount: 0 },
-        currentMonthCount: { installmentsCount: 0, transactionsCount: 0 }
-      };
-      
-      // Se não tivermos dados para este mês/ano específico, mas existem dados no banco
-      if ((itemsToUse.length === 0 && transactionsToUse.length === 0) && dataInfo.hasRealData) {
-        console.log(`Não existem dados para ${months.find((m) => m.value === currentMonth)?.label}/${currentYear}, mas existem dados em outros meses.`);
-        console.log(`Total de dados: ${dataInfo.totalDataCount.installmentsCount} parcelas e ${dataInfo.totalDataCount.transactionsCount} transações no banco.`);
-      } 
-      // Se não temos dados em nenhum lugar (nem neste mês, nem em outros)
-      else if (itemsToUse.length === 0 && transactionsToUse.length === 0) {
-        console.log("Não existem dados para este mês nem para outros meses. Usando dados de demonstração.");
-      } 
-      // Temos dados reais para este mês
-      else {
-        console.log(`Dados reais encontrados: ${itemsToUse.length} parcelas e ${transactionsToUse.length} transações para ${months.find((m) => m.value === currentMonth)?.label}/${currentYear}`);
-      }
-        
-      // Adicionar status de pagamento padrão como falso
-      const itemsWithPaymentStatus = itemsToUse.map((item: any) => ({
+      // A nova API retorna uma lista consolidada 'items'
+      // e os totais já calculados.
+      const allItems = (data.items || []).map((item: any) => ({
         ...item,
-        isPaid: false,
-        isDemoData: !dataInfo.hasRealData || (itemsToUse.length === 0 && transactionsToUse.length === 0)
+        date: new Date(item.date), // Converter string de data para objeto Date
+        // 'category' já deve vir como 'category_name' da API do worker nos JOINs
+        category: item.category_name || 'N/A',
+        isPaid: false, // Lógica de 'isPaid' precisaria ser mantida ou vir da API
+        isDemoData: false // Simplificado, assumindo dados reais
       }));
-      setInvoiceItems(itemsWithPaymentStatus);
+
+      // Separar em invoiceItems (parcelas) e transactions para a UI existente, se necessário
+      // Ou ajustar a UI para consumir a lista 'allItems' diretamente.
+      // Por enquanto, vamos popular `invoiceItems` com tudo para a tabela principal.
+      setInvoiceItems(allItems);
       
-      // Marcar transações de demonstração
-      const transactionsWithDemoFlag = transactionsToUse.map((transaction: any) => ({
-        ...transaction,
-        isDemoData: !dataInfo.hasRealData || (itemsToUse.length === 0 && transactionsToUse.length === 0)
-      }));
-      
-      // Extrair categorias únicas
+      // `transactions` pode não ser mais necessário separadamente se 'allItems' for usado para a tabela.
+      // Se a aba 'transactions' ainda for usada, precisaria filtrar de 'allItems'.
+      setTransactions(allItems.filter(item => item.type === 'income' || item.type === 'expense'));
+
       const uniqueCategories = Array.from(
-        new Set([...itemsToUse, ...transactionsToUse].map((item: any) => item.category))
+        new Set(allItems.map((item: any) => item.category))
       ) as string[];
       setCategories(uniqueCategories);
 
-      // Salvar transações e resumo
-      setTransactions(transactionsWithDemoFlag);
-      
-      // Calcular totais para o resumo se não tiver vindo da API
-      if (data.summary) {
-        setSummary(data.summary);
-      } else {
-        // Calcular totais para o resumo
-        const demoTotalExpenses = transactionsToUse
-          .filter((t: any) => t.type === "expense")
-          .reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
-        
-        const demoTotalIncome = transactionsToUse
-          .filter((t: any) => t.type === "income")
-          .reduce((sum: number, t: any) => sum + (t.amount || 0), 0);
-        
-        const demoTotalInstallments = itemsToUse
-          .reduce((sum: number, item: any) => sum + (item.installmentAmount || 0), 0);
-          
-        setSummary({
-          totalExpenses: demoTotalExpenses,
-          totalIncome: demoTotalIncome,
-          totalInstallments: demoTotalInstallments,
-          balance: demoTotalIncome - demoTotalExpenses - demoTotalInstallments
-        });
-        }
-      } catch (error) {
+      setSummary({
+        totalExpenses: data.totalExpense || 0,
+        totalIncome: data.totalIncome || 0,
+        // totalInstallments pode ser derivado de data.items ou a API pode adicioná-lo
+        totalInstallments: allItems.filter(item => item.type === 'installment').reduce((sum, item) => sum + item.amount, 0),
+        balance: data.balance || 0
+      });
+
+    } catch (error) {
         console.error("Erro ao buscar faturas:", error)
       if (error instanceof Error && error.message.includes("jwt expired")) {
         setShowSessionExpired(true)

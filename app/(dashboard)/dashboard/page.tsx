@@ -94,7 +94,7 @@ export default function DashboardPage() {
       if (!token || !user?.id) return
       
       try {
-        const response = await fetch(`/api/credit-cards?userId=${user.id}`, {
+        const response = await fetch(`/api/credit-cards`, { // Removido userId de query params
           headers: { Authorization: `Bearer ${token}` }
         })
         
@@ -110,20 +110,30 @@ export default function DashboardPage() {
     fetchCreditCards()
   }, [token, user])
 
-  const { dashboard, transactions, loading, error } = useDashboardData(token || "")
+  const { dashboard, transactions, loading, error } = useDashboardData(token || "") // `dashboard` agora é DashboardSummaryResponse
 
-  // Criar dados do mini gráfico para o saldo
-  const miniChartData = dashboard?.monthlyData?.slice(-6).map((item: any) => ({
-    name: item.month,
-    value: item.balance
-  })) || []
+  // Criar dados do mini gráfico para o saldo - REMOVIDO/SIMPLIFICADO
+  // const miniChartData = dashboard?.monthlyData?.slice(-6).map((item: any) => ({
+  //   name: item.month,
+  //   value: item.balance
+  // })) || []
+  const miniChartData: any[] = []; // Simplificado por enquanto
 
-  // Função para processar dados baseados no período selecionado
+  // Função para processar dados baseados no período selecionado - SIMPLIFICADO
   const processChartData = useMemo(() => {
-    if (!dashboard?.monthlyData) return []
+    // if (!dashboard?.monthlyData) return [] // monthlyData não existe mais na resposta simplificada
+    // A lógica complexa de processChartData precisa ser revista ou alimentada por um novo endpoint/dados.
+    // Por enquanto, retornará vazio para o gráfico principal não quebrar.
+    console.log("Dashboard data for chart processing:", dashboard);
+    if (chartPeriod === 'Mensal' && dashboard?.currentMonth?.expensesByCategory) {
+      // Poderíamos tentar mostrar expensesByCategory no gráfico principal se for 'Mensal'
+      // Mas a estrutura de dados é diferente (category vs. time series)
+      // Por enquanto, manter simples e retornar vazio.
+    }
+    return []; // Simplificado
 
-    const today = new Date();
-    const currentYear = today.getFullYear();
+    // const today = new Date(); // Lógica antiga mantida comentada abaixo para referência
+    // const currentYear = today.getFullYear();
     const currentMonth = today.getMonth();
     
     switch (chartPeriod) {
@@ -393,7 +403,8 @@ export default function DashboardPage() {
                   <p className="text-3xl font-bold">{formatCurrency(dashboard?.currentMonth?.balance || 0)}</p>
                 </div>
                 <div className="w-24 h-16">
-                  <ResponsiveContainer width="100%" height="100%">
+                  {/* Mini Chart Removido temporariamente devido à mudança na API */}
+                  {/* <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={miniChartData}>
                       <Line 
                         type="monotone" 
@@ -403,10 +414,11 @@ export default function DashboardPage() {
                         dot={false} 
                       />
                     </LineChart>
-                  </ResponsiveContainer>
-                  <div className="text-xs text-green-400 text-right">
+                  </ResponsiveContainer> */}
+                  {/* Tendência Removida temporariamente */}
+                  {/* <div className="text-xs text-green-400 text-right">
                     +{formatPercentage(dashboard?.trends?.balance || 0)}%
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </CardContent>
@@ -422,9 +434,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-end justify-between">
                   <p className="text-2xl font-bold">{formatCurrency(dashboard?.currentMonth?.totalIncome || 0)}</p>
-                  <div className="text-xs text-green-600">+{formatPercentage(dashboard?.trends?.income || 0)}%</div>
+                  {/* Tendência Removida <div className="text-xs text-green-600">+{formatPercentage(dashboard?.trends?.income || 0)}%</div> */}
                 </div>
                 <div className="mt-2 h-10">
+                  {/* Mini Gráfico Removido
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={dashboard?.monthlyData?.slice(-4)}>
                       <Area 
@@ -435,7 +448,7 @@ export default function DashboardPage() {
                         fillOpacity={0.2} 
                       />
                     </AreaChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
                 </div>
               </CardContent>
             </Card>
@@ -448,9 +461,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-end justify-between">
                   <p className="text-2xl font-bold">{formatCurrency(dashboard?.currentMonth?.totalExpense || 0)}</p>
-                  <div className="text-xs text-red-600">+{formatPercentage(dashboard?.trends?.expense || 0)}%</div>
+                  {/* Tendência Removida <div className="text-xs text-red-600">+{formatPercentage(dashboard?.trends?.expense || 0)}%</div> */}
                 </div>
                 <div className="mt-2 h-10">
+                  {/* Mini Gráfico Removido
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={dashboard?.monthlyData?.slice(-4)}>
                       <Area 
@@ -461,7 +475,7 @@ export default function DashboardPage() {
                         fillOpacity={0.2} 
                       />
                     </AreaChart>
-                  </ResponsiveContainer>
+                  </ResponsiveContainer> */}
                 </div>
               </CardContent>
             </Card>
@@ -474,9 +488,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-end justify-between">
                   <p className="text-2xl font-bold">{formatCurrency((dashboard?.currentMonth?.balance || 0) * 0.2)}</p>
-                  <div className="text-xs text-blue-600">+{formatPercentage(Math.round((dashboard?.trends?.balance || 0) * 0.8))}%</div>
+                  {/* Tendência Removida <div className="text-xs text-blue-600">+{formatPercentage(Math.round((dashboard?.trends?.balance || 0) * 0.8))}%</div> */}
                 </div>
                 <div className="mt-2 h-10">
+                  {/* Mini Gráfico Removido
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={dashboard?.monthlyData?.slice(-4)}>
                       <Area 
