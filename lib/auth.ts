@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
-import jwt from 'jsonwebtoken'
+import * as jose from 'jose' // Alterado para jose
 
 const BCRYPT_COST_FACTOR = 12;
 
@@ -87,30 +87,56 @@ export interface JwtPayload {
   id: string;
   email: string;
   role: "admin" | "user";
+  // Adicionar exp e iat se quisermos que sejam parte do nosso payload explicitamente,
+  // embora jose os adicione automaticamente.
+  // exp?: number;
+  // iat?: number;
 }
 
-export function generateUserToken(user: Omit<User, 'password_hash' | 'isAdmin'>, jwtSecret: string): string {
+// Helper para converter string para Uint8Array para a chave secreta do jose
+const getJwtSecretKey = (secret: string): Uint8Array => {
+  return new TextEncoder().encode(secret);
+};
+
+export async function generateUserToken(user: Omit<User, 'password_hash' | 'isAdmin'>, jwtSecret: string): Promise<string> {
   const payload: JwtPayload = {
     id: user.id,
     email: user.email,
     role: user.role,
   };
-  return jwt.sign(payload, jwtSecret, { expiresIn: '1h' });
+  const secretKey = getJwtSecretKey(jwtSecret);
+  const token = await new jose.SignJWT(payload as unknown as jose.JWTPayload) // Cast para JWTPayload
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1h') // Tempo de expiração
+    .sign(secretKey);
+  return token;
 }
 
-export function generateRefreshToken(user: Omit<User, 'password_hash' | 'isAdmin'>, jwtSecret: string): string {
+export async function generateRefreshToken(user: Omit<User, 'password_hash' | 'isAdmin'>, jwtSecret: string): Promise<string> {
   const payload = {
     id: user.id,
+    // Poderia adicionar um tipo/escopo específico para refresh token se necessário
   };
-  return jwt.sign(payload, jwtSecret, { expiresIn: '7d' });
+  const secretKey = getJwtSecretKey(jwtSecret);
+  const token = await new jose.SignJWT(payload as unknown as jose.JWTPayload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d') // Refresh tokens geralmente têm vida mais longa
+    .sign(secretKey);
+  return token;
 }
 
-export function verifyToken(token: string, jwtSecret: string): JwtPayload {
+export async function verifyToken(token: string, jwtSecret: string): Promise<JwtPayload> {
   try {
-    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
-    return decoded;
-  } catch (error) {
-    console.error('Erro ao verificar/decodificar token:', error);
+    const secretKey = getJwtSecretKey(jwtSecret);
+    const { payload } = await jose.jwtVerify(token, secretKey, {
+      algorithms: ['HS256'], // Especificar o algoritmo esperado
+    });
+    return payload as JwtPayload;
+  } catch (error: any) {
+    console.error('Erro ao verificar/decodificar token com jose:', error.code, error.message);
+    // error.code pode ser 'ERR_JWT_EXPIRED', 'ERR_JWS_SIGNATURE_VERIFICATION_FAILED', etc.
     throw new Error('Token inválido ou expirado');
   }
 } 

@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+// import { randomUUID } from 'crypto' // Removido - crypto.randomUUID() é global em Workers
 import type { Category, Transaction } from '../types/database' // Adicionado Transaction aqui
 
 // Funções para manipulação de categorias
@@ -17,8 +17,8 @@ export async function getCategories(d1: D1Database, userId: string, type?: 'inco
 }
 
 export async function createCategory(d1: D1Database, name: string, type: 'income' | 'expense', userId: string): Promise<Category | null> {
-  const id = randomUUID()
-  
+  const id = crypto.randomUUID() // Alterado para crypto.randomUUID()
+
   const insertQuery = 'INSERT INTO categories (id, name, type, user_id) VALUES (?, ?, ?, ?)'
   await d1.prepare(insertQuery).bind(id, name, type, userId).run()
 
@@ -90,7 +90,7 @@ export async function getTransactionById(d1: D1Database, id: string, userId: str
 }
 
 export async function createTransaction(d1: D1Database, data: Omit<Transaction, 'id' | 'created_at'>): Promise<Transaction | null> {
-  const id = randomUUID();
+  const id = crypto.randomUUID(); // Alterado para crypto.randomUUID()
   const query = `
     INSERT INTO transactions (id, date, description, amount, type, category_id, user_id)
     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -137,5 +137,3 @@ export async function deleteTransaction(d1: D1Database, id: string, userId: stri
   const { success } = await d1.prepare(query).bind(id, userId).run();
   return success;
 }
-
-export { randomUUID } 

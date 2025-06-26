@@ -72,8 +72,8 @@ app.post('/api/auth/register', async (c) => {
     }
 
     const newUser = await registerUser(c.env.DB, email, password, name, role)
-    const token = generateUserToken(newUser, c.env.JWT_SECRET)
-    const refreshToken = generateRefreshToken(newUser, c.env.JWT_SECRET)
+    const token = await generateUserToken(newUser, c.env.JWT_SECRET) // Adicionado await
+    const refreshToken = await generateRefreshToken(newUser, c.env.JWT_SECRET) // Adicionado await
 
     return c.json({
       user: newUser,
@@ -102,8 +102,8 @@ app.post('/api/auth/login', async (c) => {
       return c.json({ error: 'Credenciais inválidas.' }, 401)
     }
 
-    const token = generateUserToken(user, c.env.JWT_SECRET)
-    const refreshToken = generateRefreshToken(user, c.env.JWT_SECRET)
+    const token = await generateUserToken(user, c.env.JWT_SECRET) // Adicionado await
+    const refreshToken = await generateRefreshToken(user, c.env.JWT_SECRET) // Adicionado await
 
     return c.json({
       user,
@@ -130,7 +130,7 @@ app.post('/api/auth/refresh', async (c) => {
       return c.json({ error: 'Usuário não encontrado ou token de atualização inválido.' }, 401);
     }
 
-    const newAccessToken = generateUserToken(user, c.env.JWT_SECRET);
+    const newAccessToken = await generateUserToken(user, c.env.JWT_SECRET); // Adicionado await
 
     return c.json({
       token: newAccessToken,
