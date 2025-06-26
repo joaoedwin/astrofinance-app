@@ -1,91 +1,55 @@
-import { useState, useCallback } from "react"
-import { useAuthContext } from "@/contexts/auth-context"
+import { useState, useCallback } from "react";
+import { useAuthContext } from "@/contexts/auth-context";
 
 export interface Installment {
-  id: string
-  description: string
-  category_id: string
-  category: string
-  totalAmount: number
-  installmentAmount: number
-  totalInstallments: number
-  paidInstallments: number
-  startDate: string
-  nextPaymentDate: string
-  type: string
+  id: string;
+  description: string;
+  category_id: string;
+  category: string; // Este virá do JOIN no backend ou precisará ser buscado separadamente
+  totalAmount: number;
+  installmentAmount: number;
+  totalInstallments: number;
+  paidInstallments: number;
+  startDate: string; // YYYY-MM-DD
+  nextPaymentDate: string; // YYYY-MM-DD
+  type: string; // Geralmente 'expense'
+  userId?: string; // Adicionado, pois é parte do modelo de dados retornado pela API
+  created_at?: string;
+  creditCardId?: number | null;
+  credit_card_name?: string; // Virá do JOIN
 }
 
-export function useInstallments() {
-  const { token } = useAuthContext()
-  const [installments, setInstallments] = useState<Installment[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchInstallments = useCallback(async () => {
-    if (!token) return
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch("/api/installments", {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: "Erro ao buscar parcelamentos" }));
-        throw new Error(errorData.message || "Erro ao buscar parcelamentos");
-      }
-      const data = await res.json();
-      setInstallments(Array.isArray(data) ? data : []); // API retorna array diretamente
-    } catch (err: any) {
-      setError(err.message);
-      setInstallments([]); // Limpar em caso de erro
-    } finally {
-      setLoading(false)
-    }
-  }, [token])
-
-  return {
-    installments,
-    loading,
-    error,
-    fetchInstallments,
-    setInstallments,
-    createInstallment,
-    updateInstallment,
-    deleteInstallment,
 // Tipos para dados de criação e atualização, para melhor clareza
-type CreateInstallmentPayload = Omit<Installment, 'id' | 'userId' | 'created_at' | 'paidInstallments' | 'type' | 'category' | 'nextPaymentDate'> & { creditCardId?: number | null };
+type CreateInstallmentPayload = Omit<Installment, 'id' | 'userId' | 'created_at' | 'paidInstallments' | 'type' | 'category' | 'nextPaymentDate' | 'credit_card_name'> & { creditCardId?: number | null };
 type UpdateInstallmentPayload = Partial<Omit<CreateInstallmentPayload, 'userId'>>;
 
-// A definição anterior de useInstallments que era mais simples foi removida.
-// Esta é a definição completa.
-export function useInstallments() { // Adicionado export aqui, se a anterior era a exportada.
-  const { token } = useAuthContext()
-  const [installments, setInstallments] = useState<Installment[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function useInstallments() {
+  const { token } = useAuthContext();
+  const [installments, setInstallments] = useState<Installment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchInstallments = useCallback(async () => {
-    // ... (código existente de fetchInstallments, já corrigido)
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/installments", {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: "Erro ao buscar parcelamentos" }));
         throw new Error(errorData.message || "Erro ao buscar parcelamentos");
       }
       const data = await res.json();
-      setInstallments(Array.isArray(data) ? data : []); // API retorna array diretamente
+      setInstallments(Array.isArray(data) ? data : []);
     } catch (err: any) {
       setError(err.message);
-      setInstallments([]); // Limpar em caso de erro
+      setInstallments([]);
     } finally {
       setLoading(false);
     }
-  }, [token])
+  }, [token]);
 
   const createInstallment = useCallback(async (installmentData: CreateInstallmentPayload) => {
     if (!token) throw new Error("Usuário não autenticado");
@@ -183,7 +147,6 @@ export function useInstallments() { // Adicionado export aqui, se a anterior era
       setLoading(false);
     }
   }, [token]);
-
 
   return {
     installments,
